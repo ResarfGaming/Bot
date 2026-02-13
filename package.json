@@ -1,0 +1,14 @@
+{
+  "name": "minecraft-bank-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for Minecraft bank and ID system",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.11.0",
+    "uuid": "^9.0.0"
+  }
+}
