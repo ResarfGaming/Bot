@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Minecraft Nation Portal</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{font-family:system-ui,Segoe UI,Roboto,Arial;background:#0f1724;color:#e6eef8;padding:18px}
+  .card{background:rgba(255,255,255,0.03);padding:16px;border-radius:10px;margin-bottom:12px}
+  button{padding:8px 12px;border-radius:8px;border:none;background:#2563eb;color:white;cursor:pointer}
+  input,textarea{width:100%;padding:8px;margin:6px 0;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:inherit}
+  .row{display:flex;gap:8px}
+  .hidden{display:none}
+  pre{background:#071024;padding:8px;border-radius:6px;overflow:auto}
+</style>
+</head>
+<body>
+
+<h2>Minecraft Nation Portal</h2>
+
+<div id="loginPanel" class="card">
+  <h3>Login</h3>
+  <input id="username" placeholder="username">
+  <input id="password" placeholder="password" type="password">
+  <div class="row">
+    <button onclick="login()">Login</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+  <div id="loginMsg"></div>
+</div>
+
+<div id="mainButtons" class="card hidden">
+  <button onclick="show('enroll')">Enroll User</button>
+  <button onclick="show('bank')">Bank</button>
+  <button onclick="show('company')">Manage Company</button>
+  <button onclick="show('court')">Court</button>
+</div>
+
+<!-- Enroll -->
+<div id="enroll" class="card hidden">
+  <h3>Enroll User</h3>
+  <input id="en_minecraft" placeholder="minecraft username">
+  <input id="en_realname" placeholder="real name (optional)">
+  <input id="en_citnum" placeholder="citizen number (unique)">
+  <button onclick="enroll()">Enroll</button>
+  <div id="enrollMsg"></div>
+</div>
+
+<!-- Bank -->
+<div id="bank" class="card hidden">
+  <h3>Bank — add transaction</h3>
+  <input id="bk_account" placeholder="Account">
+  <input id="bk_type" placeholder="Action (WITHDRAW/DEPOSIT)">
+  <input id="bk_item" placeholder="Item / amount (e.g., 1 DIAMOND)">
+  <input id="bk_citid" placeholder="Citizen UUID (optional)">
+  <button onclick="addTransaction()">Add Transaction</button>
+  <button onclick="viewTransactions()">View Transactions</button>
+  <div id="bankMsg"></div>
+  <pre id="txLog"></pre>
+</div>
+
+<!-- Company -->
+<div id="company" class="card hidden">
+  <h3>Register Company</h3>
+  <input id="co_name" placeholder="Company name">
+  <input id="co_owner" placeholder="Owner username">
+  <input id="co_pass" placeholder="Company login password">
+  <textarea id="co_info" placeholder="Info"></textarea>
+  <button onclick="registerCompany()">Register</button>
+  <div id="companyMsg"></div>
+</div>
+
+<!-- Court -->
+<div id="court" class="card hidden">
+  <h3>Court</h3>
+  <input id="court_search" placeholder="Citizen username to search">
+  <button onclick="searchCitizen()">Search</button>
+  <div id="courtResult"></div>
+  <h4>Add legal note</h4>
+  <textarea id="court_note"></textarea>
+  <button onclick="addCourtNote()">Add note</button>
+</div>
+
+<script>
+const api = (path, opts={}) => fetch('/api/' + path, { credentials: 'include', headers: {'Content-Type':'application/json'}, ...opts })
+  .then(r => r.json());
+
+function show(id) {
+  ['enroll','bank','company','court'].forEach(x => document.getElementById(x).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+async function login(){
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  const r = await api('login', { method:'POST', body: JSON.stringify({ username:u, password:p }) });
+  document.getElementById('loginMsg').innerText = JSON.stringify(r);
+  if (r.ok) {
+    document.getElementById('mainButtons').classList.remove('hidden');
+  }
+}
+
+async function logout(){
+  // clear cookie server-side would be better; simple client refresh
+  document.getElementById('mainButtons').classList.add('hidden');
+  document.getElementById('loginMsg').innerText = 'Logged out locally. Refresh to clear server session cookie (or implement /api/logout).';
+}
+
+async function enroll(){
+  const data = {
+    minecraft_username: document.getElementById('en_minecraft').value,
+    real_name: document.getElementById('en_realname').value,
+    citizen_number: document.getElementById('en_citnum').value
+  };
+  const r = await api('enroll_user', { method:'POST', body: JSON.stringify(data) });
+  document.getElementById('enrollMsg').innerText = JSON.stringify(r);
+}
+
+async function addTransaction(){
+  const body = {
+    account: document.getElementById('bk_account').value,
+    action_type: document.getElementById('bk_type').value,
+    item: document.getElementById('bk_item').value,
+    citizen_id: document.getElementById('bk_citid').value || null
+  };
+  const r = await api('add_transaction', { method:'POST', body: JSON.stringify(body) });
+  document.getElementById('bankMsg').innerText = JSON.stringify(r);
+}
+
+async function viewTransactions(){
+  const r = await api('view_transactions');
+  document.getElementById('txLog').innerText = JSON.stringify(r.data || r, null, 2);
+}
+
+async function registerCompany(){
+  const body = {
+    name: document.getElementById('co_name').value,
+    owner_username: document.getElementById('co_owner').value,
+    password: document.getElementById('co_pass').value,
+    info: document.getElementById('co_info').value
+  };
+  const r = await api('company_register', { method:'POST', body: JSON.stringify(body) });
+  document.getElementById('companyMsg').innerText = JSON.stringify(r);
+}
+
+async function searchCitizen(){
+  const q = document.getElementById('court_search').value;
+  // simple search via Supabase RPC or select endpoint; for brevity implement endpoint later.
+  const r = await fetch('/api/search_citizen?q=' + encodeURIComponent(q), { credentials:'include' }).then(x => x.json());
+  document.getElementById('courtResult').innerText = JSON.stringify(r, null, 2);
+}
+
+async function addCourtNote(){
+  const note = document.getElementById('court_note').value;
+  const r = await api('court_add_note', { method:'POST', body: JSON.stringify({ note, citizen_id: null, company_id: null }) });
+  document.getElementById('courtResult').innerText = JSON.stringify(r);
+}
+</script>
+</body>
+</html>
