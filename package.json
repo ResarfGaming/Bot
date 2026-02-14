@@ -1,9 +1,0 @@
-{
-  "name": "minecraft-portal",
-  "version": "1.0.0",
-  "type": "module",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.34.0",
-    "bcryptjs": "^2.4.3"
-  }
-}
