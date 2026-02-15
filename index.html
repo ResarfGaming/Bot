@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>The Archive — Account Portal</title>
+<style>
+  :root{
+    --bg:#0b0b0b; --panel:#0f0f0f; --muted:#9aa0a6; --text:#fff; --accent:#e6e6e6; --radius:10px;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:28px auto;padding:18px}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  h1{margin:0;font-size:18px;color:var(--accent)}
+  .sub{font-size:12px;color:var(--muted)}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.03);margin-bottom:12px}
+  input,button,select,textarea{font:inherit}
+  input,select,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);margin-top:6px}
+  .row{display:flex;gap:8px;align-items:center}
+  button{padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:var(--text);cursor:pointer}
+  button.primary{background:var(--text);color:#000;border:none}
+  .small{font-size:13px;color:var(--muted)}
+  .hidden{display:none}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--muted)}
+  th{color:var(--accent);font-size:12px;text-transform:uppercase}
+  .center{display:flex;align-items:center;justify-content:center}
+  .eye{cursor:pointer;margin-left:8px}
+  footer{font-size:12px;color:var(--muted);margin-top:18px;text-align:center}
+  @media (max-width:700px){.row{flex-direction:column;align-items:stretch}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>The Archive</h1>
+      <div class="sub">Player Portal — Account & Verification</div>
+    </div>
+    <div class="small" id="who">Not logged in</div>
+  </header>
+
+  <!-- Login / Register Card -->
+  <section id="authCard" class="card">
+    <div id="authViews">
+      <div id="loginView">
+        <div class="small">Login</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label class="small">Minecraft username</label>
+            <input id="login_user" placeholder="player123">
+          </div>
+          <div>
+            <label class="small">Password</label>
+            <input id="login_pass" type="password" placeholder="password">
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="primary" onclick="doLogin()">Login</button>
+          <button onclick="showRegister()">Create account</button>
+        </div>
+        <div id="loginMsg" class="small" style="margin-top:8px"></div>
+      </div>
+
+      <div id="registerView" class="hidden">
+        <div class="small">Create Account</div>
+        <label class="small">Name</label>
+        <input id="reg_name" placeholder="Your name">
+        <label class="small">Minecraft username</label>
+        <input id="reg_user" placeholder="player123">
+        <label class="small">Password</label>
+        <input id="reg_pass" type="password" placeholder="password">
+        <div class="row" style="margin-top:8px">
+          <button class="primary" onclick="doRegister()">Create & Sign In</button>
+          <button onclick="showLogin()">Back to login</button>
+        </div>
+        <div id="regMsg" class="small" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard / Status Card -->
+  <section id="dashboard" class="card hidden">
+    <div id="statusArea"></div>
+
+    <div id="mainDash" class="hidden">
+      <h3 style="margin:6px 0">Welcome, <span id="dashName"></span></h3>
+      <div class="small">Rank: <strong id="dashRank"></strong></div>
+      <div style="margin-top:10px">
+        <label class="small">Citizen Number</label>
+        <div class="row">
+          <input id="citizenField" readonly placeholder="XXX-XXX-XXX-XXX">
+          <div class="eye" title="Show/Hide" onclick="toggleCitizen()">👁️</div>
+        </div>
+        <div class="small" style="margin-top:8px">Visible only after pressing the eye. Keep it private.</div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+
+      <div>
+        <strong class="small">Verify Purchase</strong>
+        <div style="margin-top:8px" class="row">
+          <input id="verify_input" placeholder="000000" style="width:140px">
+          <button onclick="checkCode()">Check code</button>
+          <button onclick="invalidateCode()">Invalidate & New Code</button>
+        </div>
+        <div id="verifyResult" class="small" style="margin-top:8px"></div>
+        <div style="margin-top:8px">
+          <button onclick="genCode()">Generate / Show my 6-digit code</button>
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+
+      <div id="adminArea" class="hidden">
+        <strong class="small">Admin Panel</strong>
+        <div style="margin-top:8px">
+          <button onclick="loadUsers()">Load users</button>
+        </div>
+        <div id="usersList" style="margin-top:8px"></div>
+      </div>
+
+      <div style="margin-top:12px" class="row">
+        <button onclick="doLogout()">Logout</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>Designed for a friend-server. Passwords are hashed; sessions are HTTP-only cookies.</footer>
+</div>
+
+<script>
+/* Helper: fetch wrapper that sends cookie */
+async function api(path, opts={}) {
+  const url = '/api/' + path;
+  const init = Object.assign({ credentials: 'include', headers: { 'Content-Type': 'application/json' } }, opts);
+  const r = await fetch(url, init);
+  const txt = await r.text();
+  try { return { ok: r.ok, status: r.status, data: JSON.parse(txt) }; } catch(e) { return { ok: r.ok, status: r.status, data: txt }; }
+}
+
+/* UI helpers */
+function show(el){ document.getElementById(el).classList.remove('hidden'); }
+function hide(el){ document.getElementById(el).classList.add('hidden'); }
+function setText(id, txt){ const n=document.getElementById(id); if(n) n.innerText = txt; }
+
+/* Auth view toggles */
+function showRegister(){ hide('loginView'); show('registerView'); setText('regMsg',''); }
+function showLogin(){ hide('registerView'); show('loginView'); setText('loginMsg',''); }
+
+/* On load: check session */
+window.addEventListener('load', async () => {
+  await checkSession();
+});
+
+/* Check session and route accordingly */
+async function checkSession(){
+  const r = await api('check_session', { method: 'GET' });
+  if (!r.ok) {
+    // if backend returns 200 with loggedIn false it still appears ok
+    if (r.status === 200 && r.data && r.data.loggedIn === false) {
+      // show auth
+      setText('who','Not logged in');
+      show('authCard'); hide('dashboard');
+      showLogin();
+      return;
+    }
+    setText('loginMsg','Error contacting server: ' + r.status);
+    show('authCard'); hide('dashboard');
+    return;
+  }
+  const body = r.data;
+  if (!body || body.loggedIn === false) {
+    setText('who','Not logged in');
+    show('authCard'); hide('dashboard');
+    showLogin();
+    return;
+  }
+  // logged in
+  const user = body.user;
+  setText('who', user.minecraft_username + ' (' + user.role + ')');
+  // load dashboard data
+  await loadDashboard();
+}
+
+/* Register */
+async function doRegister(){
+  const name = document.getElementById('reg_name').value.trim();
+  const minecraft_username = document.getElementById('reg_user').value.trim();
+  const password = document.getElementById('reg_pass').value;
+  if(!name || !minecraft_username || !password){ setText('regMsg','Please fill fields'); return; }
+  setText('regMsg','Creating account...');
+  const r = await api('register', { method: 'POST', body: JSON.stringify({ name, minecraft_username, password }) });
+  if(!r.ok) { setText('regMsg','Error: ' + (r.data && r.data.error ? r.data.error : r.status)); return; }
+  if(r.data && r.data.ok){ setText('regMsg','Account created.'); await checkSession(); }
+  else setText('regMsg','Unexpected response');
+}
+
+/* Login */
+async function doLogin(){
+  const minecraft_username = document.getElementById('login_user').value.trim();
+  const password = document.getElementById('login_pass').value;
+  if(!minecraft_username || !password){ setText('loginMsg','Missing fields'); return; }
+  setText('loginMsg','Signing in...');
+  const r = await api('login', { method: 'POST', body: JSON.stringify({ minecraft_username, password }) });
+  if(!r.ok){ setText('loginMsg','Login failed: ' + (r.data && r.data.error ? r.data.error : r.status)); return; }
+  setText('loginMsg','Logged in');
+  await checkSession();
+}
+
+/* Logout */
+async function doLogout(){
+  await api('logout', { method: 'POST' });
+  setText('who','Not logged in');
+  hide('dashboard'); show('authCard'); showLogin();
+}
+
+/* Load dashboard and handle account_status */
+async function loadDashboard(){
+  const r = await api('check_session', { method: 'GET' });
+  if(!r.ok || !r.data || !r.data.loggedIn){ setText('loginMsg','Session error'); show('authCard'); hide('dashboard'); return; }
+  const user = r.data.user;
+  // show dashboard area
+  hide('authCard'); show('dashboard');
+  const status = user.account_status;
+  if (status === 1) {
+    document.getElementById('statusArea').innerHTML = '<div class="small">Processing Your Account — Please wait while we process your account.</div>';
+    hide('mainDash');
+    return;
+  } else if (status === 2) {
+    document.getElementById('statusArea').innerHTML = '<div class="small">Your Account Is Ready. <button onclick="completeAccount()">Complete Account Creation</button></div>';
+    hide('mainDash');
+    return;
+  } else if (status === 3) {
+    document.getElementById('statusArea').innerHTML = '<div class="small">Your Account Could Not Be Created. Our staff team denied your request.</div>';
+    hide('mainDash');
+    return;
+  } else if (status === 4) {
+    document.getElementById('statusArea').innerHTML = '<div class="small">Your Account Is Locked. Contact Support To Unlock it.</div>';
+    hide('mainDash');
+    return;
+  }
+  // status 0 -> active
+  document.getElementById('statusArea').innerHTML = '';
+  show('mainDash');
+  setText('dashName', user.name);
+  setText('dashRank', user.rank || 'Normal');
+  // citizen id hidden initially
+  document.getElementById('citizenField').value = user.citizen_id || '';
+  document.getElementById('citizenField').type = 'text';
+  document.getElementById('citizenField').style.webkitTextSecurity = 'disc';
+  // show admin area if role is admin
+  if (user.role === 'admin') {
+    show('adminArea');
+  } else { hide('adminArea'); }
+}
+
+/* Toggle reveal of citizen id (eye) */
+let citizenVisible = false;
+function toggleCitizen(){
+  const el = document.getElementById('citizenField');
+  citizenVisible = !citizenVisible;
+  if(citizenVisible){
+    el.style.webkitTextSecurity = 'none';
+  } else {
+    el.style.webkitTextSecurity = 'disc';
+  }
+}
+
+/* Complete account (status 2 -> set 0) */
+async function completeAccount(){
+  const r = await api('complete_account', { method: 'POST' });
+  if(!r.ok){ alert('Failed: ' + (r.data && r.data.error ? r.data.error : r.status)); return; }
+  alert('Account completed. Reloading.');
+  await loadDashboard();
+}
+
+/* Generate 6-digit code for user */
+async function genCode(){
+  const r = await api('generate_code', { method: 'POST' });
+  if(!r.ok){ setText('verifyResult','Error generating code: ' + (r.data && r.data.error ? r.data.error : r.status)); return; }
+  const code = r.data.code || (r.data && r.data.newCode) || '------';
+  setText('verifyResult','Your code: ' + code + ' (use in Verify Purchase)');
+}
+
+/* Check code */
+async function checkCode(){
+  const code = document.getElementById('verify_input').value.trim();
+  if(!code){ setText('verifyResult','Enter a 6-digit code'); return; }
+  const r = await api('verify_code', { method: 'POST', body: JSON.stringify({ code }) });
+  if(!r.ok){ setText('verifyResult','Code invalid or not found'); return; }
+  if(r.data && r.data.ok && r.data.user){
+    const u = r.data.user;
+    setText('verifyResult', `Code belongs to ${u.name} (${u.minecraft_username}) ID: ${u.citizen_id}`);
+    const container = document.getElementById('verifyResult');
+    container.innerHTML = `Code belongs to <strong>${u.name}</strong> (${u.minecraft_username}) — ID: ${u.citizen_id} <div style="margin-top:6px"><button onclick="invalidateCodeFor('${u.id}')">Invalidate & Complete</button></div>`;
+  } else {
+    setText('verifyResult','Unexpected response');
+  }
+}
+
+/* Invalidate code for user (and generate a new one) */
+async function invalidateCodeFor(user_id){
+  const r = await api('invalidate_code', { method: 'POST', body: JSON.stringify({ user_id }) });
+  if(!r.ok){ alert('Failed to invalidate: ' + (r.data && r.data.error ? r.data.error : r.status)); return; }
+  alert('Invalidated. New code: ' + (r.data.newCode || 'generated'));
+  setText('verifyResult','Code invalidated and new code generated.');
+}
+
+/* Generic invalidate button (for current user) */
+async function invalidateCode(){
+  const s = await api('check_session', { method: 'GET' });
+  if(!s.ok || !s.data || !s.data.user){ setText('verifyResult','Session error'); return; }
+  const uid = s.data.user.id;
+  await invalidateCodeFor(uid);
+}
+
+/* Admin: load users */
+async function loadUsers(){
+  const r = await api('admin_get_users', { method: 'GET' });
+  if(!r.ok){ setText('usersList','Admin access required or error: ' + (r.data && r.data.error ? r.data.error : r.status)); return; }
+  const arr = r.data.data || [];
+  if(!arr.length){ document.getElementById('usersList').innerHTML = '<div class="small">No users</div>'; return; }
+  let html = '<table><thead><tr><th>Name</th><th>Username</th><th>Citizen ID</th><th>Status</th><th>Role</th><th>Rank</th><th>Actions</th></tr></thead><tbody>';
+  for(const u of arr){
+    html += `<tr><td>${escapeHtml(u.name)}</td><td>${escapeHtml(u.minecraft_username)}</td><td>${escapeHtml(u.citizen_id||'')}</td><td>${escapeHtml(String(u.account_status))}</td><td>${escapeHtml(u.role||'')}</td><td>${escapeHtml(u.rank||'')}</td><td><button onclick="viewUser('${u.id}')">View</button></td></tr>`;
+  }
+  html += '</tbody></table>';
+  document.getElementById('usersList').innerHTML = html;
+}
+
+/* Admin: view single user (loads details and allows updates) */
+async function viewUser(user_id){
+  const r = await api('admin_get_users', { method: 'GET' });
+  if(!r.ok){ alert('Failed to fetch users'); return; }
+  const u = (r.data.data || []).find(x => x.id === user_id);
+  if(!u){ alert('Not found'); return; }
+  const html = `<div class="small"><strong>${escapeHtml(u.name)}</strong> (${escapeHtml(u.minecraft_username)})<div>Citizen ID: ${escapeHtml(u.citizen_id||'')}</div><div>Status: ${escapeHtml(String(u.account_status))}</div><div>Role: ${escapeHtml(u.role||'')}</div><div>Rank: ${escapeHtml(u.rank||'')}</div></div>
+  <div style="margin-top:8px">
+    <label class="small">Set status (0 active,1 processing,2 ready,3 denied,4 locked)</label>
+    <input id="adm_status" value="${escapeHtml(String(u.account_status))}">
+    <label class="small">Set role</label>
+    <input id="adm_role" value="${escapeHtml(u.role||'user')}">
+    <label class="small">Set rank</label>
+    <input id="adm_rank" value="${escapeHtml(u.rank||'')}">
+    <label class="small">Reset password (new)</label>
+    <input id="adm_newpass" placeholder="leave empty to keep">
+    <div style="margin-top:8px"><button onclick="adminUpdate('${u.id}')">Save</button></div>
+  </div>`;
+  document.getElementById('usersList').innerHTML = html;
+}
+
+/* Admin: update user */
+async function adminUpdate(user_id){
+  const status = parseInt(document.getElementById('adm_status').value,10);
+  const role = document.getElementById('adm_role').value.trim();
+  const rank = document.getElementById('adm_rank').value.trim();
+  const newpass = document.getElementById('adm_newpass').value;
+  const payload = { user_id, account_status: status, role, rank };
+  if(newpass) payload.new_password = newpass;
+  const r = await api('admin_update_user', { method: 'POST', body: JSON.stringify(payload) });
+  if(!r.ok){ alert('Failed to update: ' + (r.data && r.data.error ? r.data.error : r.status)); return; }
+  alert('Updated. Reloading users.');
+  loadUsers();
+}
+
+/* escape */
+function escapeHtml(s){ if(!s && s !== 0) return ''; return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>
